@@ -1,5 +1,5 @@
 use arrform::{arrform, ArrForm};
-use cgmath::Vector3;
+// use cgmath::Vector3;
 use core::{any::type_name, fmt, marker::PhantomData};
 use num::{FromPrimitive, ToPrimitive};
 
@@ -146,21 +146,21 @@ pub(crate) fn offset_of<A, B>(a: &A, b: &B) -> usize {
     b as *const _ as usize - a as *const _ as usize
 }
 
-pub fn vector_from_raw(raw: [I16LE; 3]) -> Vector3<f64> {
-    Vector3::new(
-        i16::from(raw[0]) as f64,
-        i16::from(raw[1]) as f64,
-        i16::from(raw[2]) as f64,
-    )
-}
+// pub fn vector_from_raw(raw: [I16LE; 3]) -> Vector3<f64> {
+//     Vector3::new(
+//         i16::from(raw[0]) as f64,
+//         i16::from(raw[1]) as f64,
+//         i16::from(raw[2]) as f64,
+//     )
+// }
 
-pub fn raw_from_vector(v: Vector3<f64>) -> [I16LE; 3] {
-    [
-        (v.x as i16).into(),
-        (v.y as i16).into(),
-        (v.z as i16).into(),
-    ]
-}
+// pub fn raw_from_vector(v: Vector3<f64>) -> [I16LE; 3] {
+//     [
+//         (v.x as i16).into(),
+//         (v.y as i16).into(),
+//         (v.z as i16).into(),
+//     ]
+// }
 
 #[repr(transparent)]
 #[derive(Copy, Clone, Default, PartialEq, Eq)]

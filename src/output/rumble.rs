@@ -40,7 +40,8 @@ impl RumbleSide {
     }
 
     fn encode_freq(f: f32) -> u16 {
-        ((f / 10.).log2() * 32.).round() as u16
+        // ((f / 10.).log2() * 32.).round() as u16
+        12
     }
 
     fn from_encoded(

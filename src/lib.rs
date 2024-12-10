@@ -50,7 +50,7 @@ macro_rules! raw_enum {
             $(raw: $rawty,)?
             $($field: $fieldty,)*
         }
-        #[derive(Copy, Clone, Debug)]
+        #[derive(Copy, Clone)]
         pub enum $name {
             $($id($var)),*
         }
@@ -137,20 +137,20 @@ macro_rules! raw_enum {
             )*
         }
 
-        impl ::core::fmt::Debug for $struct {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> core::fmt::Result {
-                let mut out = f.debug_struct(stringify!($struct));
-                match self.id.try_into() {
-                    $(Some($tyid::$id) => {
-                        out.field(::core::stringify!($varname), unsafe { &self.u.$varname });
-                    }),*
-                    None => {
-                        out.field("id", &self.id);
-                        $(out.field("raw", unsafe { &self.u.raw as &$rawty });)?
-                    }
-                };
-                out.finish()
-            }
-        }
+        // impl ::core::fmt::Debug for $struct {
+        //     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> core::fmt::Result {
+        //         let mut out = f.debug_struct(stringify!($struct));
+        //         match self.id.try_into() {
+        //             $(Some($tyid::$id) => {
+        //                 out.field(::core::stringify!($varname), unsafe { &self.u.$varname });
+        //             }),*
+        //             None => {
+        //                 out.field("id", &self.id);
+        //                 $(out.field("raw", unsafe { &self.u.raw as &$rawty });)?
+        //             }
+        //         };
+        //         out.finish()
+        //     }
+        // }
     };
 }

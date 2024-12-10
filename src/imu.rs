@@ -1,5 +1,5 @@
 use crate::common::*;
-use cgmath::{Array, ElementWise, Vector3};
+// use cgmath::{Array, ElementWise, Vector3};
 use core::fmt;
 
 pub const IMU_SAMPLE_DURATION: f64 = 0.005;
@@ -28,35 +28,35 @@ impl Frame {
         };
         u16::from_le_bytes([raw_self[2], raw_self[3]])
     }
-    pub fn raw_accel(&self) -> Vector3<f64> {
-        vector_from_raw(self.raw_accel)
-    }
+    // pub fn raw_accel(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.raw_accel)
+    // }
 
-    pub fn raw_gyro(&self) -> Vector3<f64> {
-        vector_from_raw(self.raw_gyro)
-    }
+    // pub fn raw_gyro(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.raw_gyro)
+    // }
 
-    /// Calculation from <https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md#accelerometer---acceleration-in-g>
-    pub fn accel_g(&self, offset: Vector3<f64>, _sens: AccSens) -> Vector3<f64> {
-        // TODO: handle sens
-        (self.raw_accel() * 4.).div_element_wise(Vector3::from_value(16383.) - offset)
-    }
+    // /// Calculation from <https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md#accelerometer---acceleration-in-g>
+    // pub fn accel_g(&self, offset: Vector3<f64>, _sens: AccSens) -> Vector3<f64> {
+    //     // TODO: handle sens
+    //     (self.raw_accel() * 4.).div_element_wise(Vector3::from_value(16383.) - offset)
+    // }
 
-    /// The rotation described in this frame.
-    /// <https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md#gyroscope-calibrated---rotation-in-degreess---dps>
-    pub fn rotation_dps(&self, offset: Vector3<f64>, sens: GyroSens) -> Vector3<f64> {
-        (self.raw_gyro() - offset) * sens.factor()
-    }
+    // /// The rotation described in this frame.
+    // /// <https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering/blob/master/imu_sensor_notes.md#gyroscope-calibrated---rotation-in-degreess---dps>
+    // pub fn rotation_dps(&self, offset: Vector3<f64>, sens: GyroSens) -> Vector3<f64> {
+    //     (self.raw_gyro() - offset) * sens.factor()
+    // }
 }
 
-impl fmt::Debug for Frame {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("imu::Frame")
-            .field("accel", &self.raw_accel())
-            .field("gyro", &self.raw_gyro())
-            .finish()
-    }
-}
+// impl fmt::Debug for Frame {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         f.debug_struct("imu::Frame")
+//             .field("accel", &self.raw_accel())
+//             .field("gyro", &self.raw_gyro())
+//             .finish()
+//     }
+// }
 
 #[repr(packed)]
 #[derive(Copy, Clone, Default, Debug)]

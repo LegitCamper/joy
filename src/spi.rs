@@ -1,5 +1,5 @@
 use crate::{common::*, input::UseSPIColors};
-use cgmath::{vec2, Vector2, Vector3};
+// use cgmath::{vec2, Vector2, Vector3};
 use core::{convert::TryFrom, fmt, num::ParseIntError, str::FromStr};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -280,26 +280,26 @@ impl LeftStickCalibration {
         )
     }
 
-    pub fn value_from_raw(&self, x: u16, y: u16) -> Vector2<f64> {
-        let min = self.min();
-        let center = self.center();
-        let max = self.max();
-        let rel_x = x.max(min.0).min(max.0) as f64 - center.0 as f64;
-        let rel_y = y.max(min.1).min(max.1) as f64 - center.1 as f64;
+    // pub fn value_from_raw(&self, x: u16, y: u16) -> Vector2<f64> {
+    //     let min = self.min();
+    //     let center = self.center();
+    //     let max = self.max();
+    //     let rel_x = x.max(min.0).min(max.0) as f64 - center.0 as f64;
+    //     let rel_y = y.max(min.1).min(max.1) as f64 - center.1 as f64;
 
-        vec2(
-            if rel_x >= 0. {
-                rel_x / (max.0 as f64 - center.0 as f64)
-            } else {
-                rel_x / (center.0 as f64 - min.0 as f64)
-            },
-            if rel_y >= 0. {
-                rel_y / (max.1 as f64 - center.1 as f64)
-            } else {
-                rel_y / (center.1 as f64 - min.1 as f64)
-            },
-        )
-    }
+    //     vec2(
+    //         if rel_x >= 0. {
+    //             rel_x / (max.0 as f64 - center.0 as f64)
+    //         } else {
+    //             rel_x / (center.0 as f64 - min.0 as f64)
+    //         },
+    //         if rel_y >= 0. {
+    //             rel_y / (max.1 as f64 - center.1 as f64)
+    //         } else {
+    //             rel_y / (center.1 as f64 - min.1 as f64)
+    //         },
+    //     )
+    // }
 }
 
 impl fmt::Debug for LeftStickCalibration {
@@ -349,26 +349,26 @@ impl RightStickCalibration {
         )
     }
 
-    pub fn value_from_raw(&self, x: u16, y: u16) -> Vector2<f64> {
-        let min = self.min();
-        let center = self.center();
-        let max = self.max();
-        let rel_x = x.max(min.0).min(max.0) as f64 - center.0 as f64;
-        let rel_y = y.max(min.1).min(max.1) as f64 - center.1 as f64;
+    // pub fn value_from_raw(&self, x: u16, y: u16) -> Vector2<f64> {
+    //     let min = self.min();
+    //     let center = self.center();
+    //     let max = self.max();
+    //     let rel_x = x.max(min.0).min(max.0) as f64 - center.0 as f64;
+    //     let rel_y = y.max(min.1).min(max.1) as f64 - center.1 as f64;
 
-        vec2(
-            if rel_x >= 0. {
-                rel_x / (max.0 as f64 - center.0 as f64)
-            } else {
-                rel_x / (center.0 as f64 - min.0 as f64)
-            },
-            if rel_y >= 0. {
-                rel_y / (max.1 as f64 - center.1 as f64)
-            } else {
-                rel_y / (center.1 as f64 - min.1 as f64)
-            },
-        )
-    }
+    //     vec2(
+    //         if rel_x >= 0. {
+    //             rel_x / (max.0 as f64 - center.0 as f64)
+    //         } else {
+    //             rel_x / (center.0 as f64 - min.0 as f64)
+    //         },
+    //         if rel_y >= 0. {
+    //             rel_y / (max.1 as f64 - center.1 as f64)
+    //         } else {
+    //             rel_y / (center.1 as f64 - min.1 as f64)
+    //         },
+    //     )
+    // }
 }
 
 impl fmt::Debug for RightStickCalibration {
@@ -473,37 +473,37 @@ impl SensorCalibration {
         }
     }
 
-    pub fn acc_offset(&self) -> Vector3<f64> {
-        vector_from_raw(self.acc_orig)
-    }
+    // pub fn acc_offset(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.acc_orig)
+    // }
 
-    pub fn set_acc_offset(&mut self, offset: Vector3<f64>) {
-        self.acc_orig = raw_from_vector(offset);
-    }
+    // pub fn set_acc_offset(&mut self, offset: Vector3<f64>) {
+    //     self.acc_orig = raw_from_vector(offset);
+    // }
 
-    pub fn acc_factor(&self) -> Vector3<f64> {
-        vector_from_raw(self.acc_sens)
-    }
+    // pub fn acc_factor(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.acc_sens)
+    // }
 
-    pub fn set_acc_factor(&mut self, factor: Vector3<f64>) {
-        self.acc_sens = raw_from_vector(factor);
-    }
+    // pub fn set_acc_factor(&mut self, factor: Vector3<f64>) {
+    //     self.acc_sens = raw_from_vector(factor);
+    // }
 
-    pub fn gyro_offset(&self) -> Vector3<f64> {
-        vector_from_raw(self.gyro_orig)
-    }
+    // pub fn gyro_offset(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.gyro_orig)
+    // }
 
-    pub fn set_gyro_offset(&mut self, offset: Vector3<f64>) {
-        self.gyro_orig = raw_from_vector(offset);
-    }
+    // pub fn set_gyro_offset(&mut self, offset: Vector3<f64>) {
+    //     self.gyro_orig = raw_from_vector(offset);
+    // }
 
-    pub fn gyro_factor(&self) -> Vector3<f64> {
-        vector_from_raw(self.gyro_sens)
-    }
+    // pub fn gyro_factor(&self) -> Vector3<f64> {
+    //     vector_from_raw(self.gyro_sens)
+    // }
 
-    pub fn set_gyro_factor(&mut self, factor: Vector3<f64>) {
-        self.gyro_sens = raw_from_vector(factor);
-    }
+    // pub fn set_gyro_factor(&mut self, factor: Vector3<f64>) {
+    //     self.gyro_sens = raw_from_vector(factor);
+    // }
 }
 
 impl SPI for SensorCalibration {
@@ -596,37 +596,37 @@ impl UserSensorCalibration {
             None
         }
     }
-    pub fn acc_offset(&self) -> Option<Vector3<f64>> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.acc_offset())
-        } else {
-            None
-        }
-    }
+    // pub fn acc_offset(&self) -> Option<Vector3<f64>> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.acc_offset())
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn acc_factor(&self) -> Option<Vector3<f64>> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.acc_factor())
-        } else {
-            None
-        }
-    }
+    // pub fn acc_factor(&self) -> Option<Vector3<f64>> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.acc_factor())
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn gyro_offset(&self) -> Option<Vector3<f64>> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.gyro_offset())
-        } else {
-            None
-        }
-    }
+    // pub fn gyro_offset(&self) -> Option<Vector3<f64>> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.gyro_offset())
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn gyro_factor(&self) -> Option<Vector3<f64>> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.gyro_factor())
-        } else {
-            None
-        }
-    }
+    // pub fn gyro_factor(&self) -> Option<Vector3<f64>> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.gyro_factor())
+    //     } else {
+    //         None
+    //     }
+    // }
 }
 
 #[repr(packed)]
