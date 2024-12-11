@@ -218,6 +218,24 @@ pub struct DeviceInfo {
     pub use_spi_colors: RawId<UseSPIColors>,
 }
 
+impl DeviceInfo {
+    pub fn new(
+        firmware_version: FirmwareVersion,
+        which_controller: RawId<WhichController>,
+        mac_address: MACAddress,
+        use_spi_colors: RawId<UseSPIColors>,
+    ) -> Self {
+        Self {
+            firmware_version,
+            which_controller,
+            _something: 2,
+            mac_address,
+            _somethingelse: 1,
+            use_spi_colors,
+        }
+    }
+}
+
 #[repr(packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct FirmwareVersion(pub [u8; 2]);
