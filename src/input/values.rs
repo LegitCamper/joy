@@ -197,6 +197,11 @@ pub struct Stick {
 }
 
 impl Stick {
+    pub fn new() -> Self {
+        Stick {
+            data: [0x00, 0x10, 0x00],
+        }
+    }
     pub fn x(self) -> u16 {
         u16::from(self.data[0]) | u16::from(self.data[1] & 0xf) << 8
     }
