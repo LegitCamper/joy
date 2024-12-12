@@ -10,15 +10,23 @@ impl SPIRange {
         assert!(size <= 0x1D);
         SPIRange(offset, size)
     }
+
+    pub fn offset(&self) -> u32 {
+        self.0
+    }
+
+    pub fn size(&self) -> u8 {
+        self.1
+    }
 }
 
-const RANGE_FACTORY_CALIBRATION_SENSORS: SPIRange = SPIRange(0x6020, 0x18);
-const RANGE_FACTORY_CALIBRATION_STICKS: SPIRange = SPIRange(0x603D, 0x12);
-const RANGE_USER_CALIBRATION_STICKS: SPIRange = SPIRange(0x8010, 0x16);
-const RANGE_USER_CALIBRATION_SENSORS: SPIRange = SPIRange(0x8026, 0x1A);
+pub const RANGE_FACTORY_CALIBRATION_SENSORS: SPIRange = SPIRange(0x6020, 0x18);
+pub const RANGE_FACTORY_CALIBRATION_STICKS: SPIRange = SPIRange(0x603D, 0x12);
+pub const RANGE_USER_CALIBRATION_STICKS: SPIRange = SPIRange(0x8010, 0x16);
+pub const RANGE_USER_CALIBRATION_SENSORS: SPIRange = SPIRange(0x8026, 0x1A);
 
-const RANGE_CONTROLLER_COLOR_USE_SPI: SPIRange = SPIRange(0x601B, 1);
-const RANGE_CONTROLLER_COLOR: SPIRange = SPIRange(0x6050, 12);
+pub const RANGE_CONTROLLER_COLOR_USE_SPI: SPIRange = SPIRange(0x601B, 1);
+pub const RANGE_CONTROLLER_COLOR: SPIRange = SPIRange(0x6050, 12);
 
 pub trait SPI: TryFrom<SPIReadResult, Error = WrongRangeError> {
     fn range() -> SPIRange;
@@ -170,6 +178,13 @@ pub struct SPIReadResult {
 }
 
 impl SPIReadResult {
+    pub fn new(range: SPIRange, data: SPIData) -> Self {
+        Self {
+            address: range.0.into(),
+            size: range.1,
+            data,
+        }
+    }
     pub fn range(&self) -> SPIRange {
         SPIRange(self.address.into(), self.size)
     }
@@ -201,14 +216,14 @@ impl SPIWriteResult {
 
 #[repr(packed)]
 #[derive(Copy, Clone)]
-union SPIData {
-    sticks_factory_calib: SticksCalibration,
-    sticks_user_calib: UserSticksCalibration,
-    imu_factory_calib: SensorCalibration,
-    imu_user_calib: UserSensorCalibration,
-    color: ControllerColor,
-    use_spi_colors: RawId<UseSPIColors>,
-    raw: [u8; 0x1D],
+pub union SPIData {
+    pub sticks_factory_calib: SticksCalibration,
+    pub sticks_user_calib: UserSticksCalibration,
+    pub imu_factory_calib: SensorCalibration,
+    pub imu_user_calib: UserSensorCalibration,
+    pub color: ControllerColor,
+    pub use_spi_colors: RawId<UseSPIColors>,
+    pub raw: [u8; 0x1D],
 }
 
 // TODO: clean
@@ -409,6 +424,15 @@ impl TryFrom<SPIReadResult> for UserSticksCalibration {
                 expected: Self::range(),
                 got: value.range(),
             })
+        }
+    }
+}
+
+impl Default for UserStickCalibration {
+    fn default() -> Self {
+        Self {
+            magic: USER_NO_CALIB_MAGIC,
+            calib: LeftStickCalibration::default(),
         }
     }
 }
