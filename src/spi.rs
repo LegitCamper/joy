@@ -58,6 +58,10 @@ impl SPIReadRequest {
             size: range.1,
         }
     }
+
+    pub fn range(&self) -> SPIRange {
+        SPIRange(self.offset.into(), self.size)
+    }
 }
 
 #[repr(packed)]
