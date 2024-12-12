@@ -91,6 +91,10 @@ impl SPIWriteRequest {
             data: SPIData { raw },
         }
     }
+
+    pub fn range(&self) -> SPIRange {
+        SPIRange(self.address.into(), self.size)
+    }
 }
 
 impl From<ControllerColor> for SPIWriteRequest {
