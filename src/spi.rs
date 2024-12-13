@@ -213,6 +213,10 @@ pub struct SPIWriteResult {
 }
 
 impl SPIWriteResult {
+    /// success is 0
+    pub fn new(status: u8) -> Self {
+        Self { status }
+    }
     pub fn success(&self) -> bool {
         self.status == 0
     }
@@ -262,16 +266,26 @@ impl TryFrom<SPIReadResult> for SticksCalibration {
 #[repr(packed)]
 #[derive(Copy, Clone, Debug)]
 pub struct UserSticksCalibration {
-    pub left: UserStickCalibration,
-    pub right: UserStickCalibration,
+    pub left: LeftUserStickCalibration,
+    pub right: RightUserStickCalibration,
 }
 
 #[repr(packed)]
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone)]
 pub struct LeftStickCalibration {
     max: [u8; 3],
     center: [u8; 3],
     min: [u8; 3],
+}
+
+impl Default for LeftStickCalibration {
+    fn default() -> Self {
+        LeftStickCalibration {
+            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
+            center: [(0x79F >> 8) as u8, (0x79F & 0xFF) as u8, (0x8A0 >> 8) as u8],
+            min: [(0x510 >> 8) as u8, (0x510 & 0xFF) as u8, (0x479 >> 8) as u8],
+        }
+    }
 }
 
 impl LeftStickCalibration {
@@ -336,11 +350,21 @@ impl fmt::Debug for LeftStickCalibration {
 }
 
 #[repr(packed)]
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone)]
 pub struct RightStickCalibration {
     center: [u8; 3],
     min: [u8; 3],
     max: [u8; 3],
+}
+
+impl Default for RightStickCalibration {
+    fn default() -> Self {
+        RightStickCalibration {
+            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
+            center: [(0x79F >> 8) as u8, (0x79F & 0xFF) as u8, (0x8A0 >> 8) as u8],
+            min: [(0x510 >> 8) as u8, (0x510 & 0xFF) as u8, (0x479 >> 8) as u8],
+        }
+    }
 }
 
 impl RightStickCalibration {
@@ -394,29 +418,6 @@ impl RightStickCalibration {
     // }
 }
 
-impl fmt::Debug for RightStickCalibration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("StickCalibration")
-            .field("min", &self.min())
-            .field("center", &self.center())
-            .field("max", &self.max())
-            .finish()
-    }
-}
-
-#[repr(packed)]
-#[derive(Copy, Clone)]
-pub struct UserStickCalibration {
-    magic: [u8; 2],
-    // TODO: left and right are different
-    calib: LeftStickCalibration,
-}
-impl SPI for UserSticksCalibration {
-    fn range() -> SPIRange {
-        RANGE_USER_CALIBRATION_STICKS
-    }
-}
-
 impl TryFrom<SPIReadResult> for UserSticksCalibration {
     type Error = WrongRangeError;
 
@@ -432,7 +433,29 @@ impl TryFrom<SPIReadResult> for UserSticksCalibration {
     }
 }
 
-impl Default for UserStickCalibration {
+impl fmt::Debug for RightStickCalibration {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("StickCalibration")
+            .field("min", &self.min())
+            .field("center", &self.center())
+            .field("max", &self.max())
+            .finish()
+    }
+}
+
+#[repr(packed)]
+#[derive(Copy, Clone)]
+pub struct LeftUserStickCalibration {
+    magic: [u8; 2],
+    calib: LeftStickCalibration,
+}
+impl SPI for UserSticksCalibration {
+    fn range() -> SPIRange {
+        RANGE_USER_CALIBRATION_STICKS
+    }
+}
+
+impl Default for LeftUserStickCalibration {
     fn default() -> Self {
         Self {
             magic: USER_NO_CALIB_MAGIC,
@@ -441,7 +464,11 @@ impl Default for UserStickCalibration {
     }
 }
 
-impl UserStickCalibration {
+impl LeftUserStickCalibration {
+    pub fn set_calib(&mut self, calib: LeftStickCalibration) {
+        self.magic = USER_CALIB_MAGIC;
+        self.calib = calib;
+    }
     pub fn calib(&self) -> Option<LeftStickCalibration> {
         if self.magic == USER_CALIB_MAGIC {
             Some(self.calib)
@@ -475,7 +502,71 @@ impl UserStickCalibration {
     }
 }
 
-impl fmt::Debug for UserStickCalibration {
+impl fmt::Debug for LeftUserStickCalibration {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.magic == USER_CALIB_MAGIC {
+            f.write_fmt(format_args!("{:?}", self.calib))
+        } else {
+            f.write_str("NoUserStickCalibration")
+        }
+    }
+}
+
+#[repr(packed)]
+#[derive(Copy, Clone)]
+pub struct RightUserStickCalibration {
+    magic: [u8; 2],
+    calib: RightStickCalibration,
+}
+
+impl Default for RightUserStickCalibration {
+    fn default() -> Self {
+        Self {
+            magic: USER_NO_CALIB_MAGIC,
+            calib: RightStickCalibration::default(),
+        }
+    }
+}
+
+impl RightUserStickCalibration {
+    pub fn set_calib(&mut self, calib: RightStickCalibration) {
+        self.magic = USER_CALIB_MAGIC;
+        self.calib = calib;
+    }
+    pub fn calib(&self) -> Option<RightStickCalibration> {
+        if self.magic == USER_CALIB_MAGIC {
+            Some(self.calib)
+        } else {
+            None
+        }
+    }
+
+    pub fn max(&self) -> Option<(u16, u16)> {
+        if self.magic == USER_CALIB_MAGIC {
+            Some(self.calib.max())
+        } else {
+            None
+        }
+    }
+
+    pub fn center(&self) -> Option<(u16, u16)> {
+        if self.magic == USER_CALIB_MAGIC {
+            Some(self.calib.center())
+        } else {
+            None
+        }
+    }
+
+    pub fn min(&self) -> Option<(u16, u16)> {
+        if self.magic == USER_CALIB_MAGIC {
+            Some(self.calib.min())
+        } else {
+            None
+        }
+    }
+}
+
+impl fmt::Debug for RightUserStickCalibration {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.magic == USER_CALIB_MAGIC {
             f.write_fmt(format_args!("{:?}", self.calib))
