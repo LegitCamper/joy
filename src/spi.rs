@@ -270,6 +270,12 @@ pub struct UserSticksCalibration {
     pub right: RightUserStickCalibration,
 }
 
+impl SPI for UserSticksCalibration {
+    fn range() -> SPIRange {
+        RANGE_USER_CALIBRATION_STICKS
+    }
+}
+
 #[repr(packed)]
 #[derive(Copy, Clone)]
 pub struct LeftStickCalibration {
@@ -360,9 +366,9 @@ pub struct RightStickCalibration {
 impl Default for RightStickCalibration {
     fn default() -> Self {
         RightStickCalibration {
-            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
             center: [(0x79F >> 8) as u8, (0x79F & 0xFF) as u8, (0x8A0 >> 8) as u8],
             min: [(0x510 >> 8) as u8, (0x510 & 0xFF) as u8, (0x479 >> 8) as u8],
+            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
         }
     }
 }
@@ -448,11 +454,6 @@ impl fmt::Debug for RightStickCalibration {
 pub struct LeftUserStickCalibration {
     magic: [u8; 2],
     calib: LeftStickCalibration,
-}
-impl SPI for UserSticksCalibration {
-    fn range() -> SPIRange {
-        RANGE_USER_CALIBRATION_STICKS
-    }
 }
 
 impl Default for LeftUserStickCalibration {
