@@ -577,12 +577,32 @@ impl fmt::Debug for RightUserStickCalibration {
 }
 
 #[repr(packed)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug)]
 pub struct SensorCalibration {
     acc_orig: [I16LE; 3],
     acc_sens: [I16LE; 3],
     gyro_orig: [I16LE; 3],
     gyro_sens: [I16LE; 3],
+}
+
+impl Default for SensorCalibration {
+    fn default() -> Self {
+        SensorCalibration {
+            acc_orig: [
+                (-2 * 1024).into(), // FFB0
+                (-1 * 1024).into(), // FEB9
+                (0 * 1024).into(),  // 00E0
+            ],
+            acc_sens: [4000.into(); 3], // Default sensitivity: ±8G.
+            gyro_orig: [
+                14 * 128,  // 000E
+                253 * 128, // FFDF
+                224 * 128, // FFD0
+            ]
+            .map(|x| I16LE::from(x)),
+            gyro_sens: [5173.into(); 3], // Default sensitivity: ±2000dps.
+        }
+    }
 }
 
 impl SensorCalibration {
@@ -654,10 +674,19 @@ const USER_CALIB_MAGIC: [u8; 2] = [0xB2, 0xA1];
 const USER_NO_CALIB_MAGIC: [u8; 2] = [0xFF; 2];
 
 #[repr(packed)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug)]
 pub struct UserSensorCalibration {
     magic: [u8; 2],
     calib: SensorCalibration,
+}
+
+impl Default for UserSensorCalibration {
+    fn default() -> Self {
+        UserSensorCalibration {
+            magic: USER_CALIB_MAGIC,
+            calib: SensorCalibration::default(),
+        }
+    }
 }
 
 impl UserSensorCalibration {
