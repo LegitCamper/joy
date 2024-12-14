@@ -459,7 +459,7 @@ pub struct LeftUserStickCalibration {
 impl Default for LeftUserStickCalibration {
     fn default() -> Self {
         Self {
-            magic: USER_NO_CALIB_MAGIC,
+            magic: USER_CALIB_MAGIC,
             calib: LeftStickCalibration::default(),
         }
     }
@@ -470,6 +470,7 @@ impl LeftUserStickCalibration {
         self.magic = USER_CALIB_MAGIC;
         self.calib = calib;
     }
+
     pub fn calib(&self) -> Option<LeftStickCalibration> {
         if self.magic == USER_CALIB_MAGIC {
             Some(self.calib)
@@ -523,7 +524,7 @@ pub struct RightUserStickCalibration {
 impl Default for RightUserStickCalibration {
     fn default() -> Self {
         Self {
-            magic: USER_NO_CALIB_MAGIC,
+            magic: USER_CALIB_MAGIC,
             calib: RightStickCalibration::default(),
         }
     }
