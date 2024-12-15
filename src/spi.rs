@@ -234,9 +234,22 @@ pub union SPIData {
     pub raw: [u8; 0x1D],
 }
 
+fn cord_packing(x: u16, y: u16) -> [u8; 3] {
+    // Extract the lower and upper bits of x
+    let low_x = (x & 0xFF) as u8;
+    let high_x = ((x >> 8) & 0xFF) as u8;
+
+    // Extract the middle and lower bits of y
+    let mid_y = ((y >> 4) & 0xF0) as u8;
+    let low_y = (y & 0xF) as u8;
+
+    // Combine these into a [u8; 3] array
+    [low_x, mid_y | low_y << 4, high_x]
+}
+
 // TODO: clean
 #[repr(packed)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub struct SticksCalibration {
     pub left: LeftStickCalibration,
     pub right: RightStickCalibration,
@@ -287,9 +300,9 @@ pub struct LeftStickCalibration {
 impl Default for LeftStickCalibration {
     fn default() -> Self {
         LeftStickCalibration {
-            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
-            center: [(0x79F >> 8) as u8, (0x79F & 0xFF) as u8, (0x8A0 >> 8) as u8],
-            min: [(0x510 >> 8) as u8, (0x510 & 0xFF) as u8, (0x479 >> 8) as u8],
+            max: cord_packing(0x4F7, 0x424),
+            center: cord_packing(0x79F, 0x8A0),
+            min: cord_packing(0x510, 0x479),
         }
     }
 }
@@ -358,6 +371,7 @@ impl fmt::Debug for LeftStickCalibration {
 #[repr(packed)]
 #[derive(Copy, Clone)]
 pub struct RightStickCalibration {
+    // x, y
     center: [u8; 3],
     min: [u8; 3],
     max: [u8; 3],
@@ -366,9 +380,9 @@ pub struct RightStickCalibration {
 impl Default for RightStickCalibration {
     fn default() -> Self {
         RightStickCalibration {
-            center: [(0x79F >> 8) as u8, (0x79F & 0xFF) as u8, (0x8A0 >> 8) as u8],
-            min: [(0x510 >> 8) as u8, (0x510 & 0xFF) as u8, (0x479 >> 8) as u8],
-            max: [(0x4F7 >> 8) as u8, (0x4F7 & 0xFF) as u8, (0x424 >> 8) as u8],
+            center: cord_packing(0x79F, 0x8A0),
+            min: cord_packing(0x510, 0x479),
+            max: cord_packing(0x4F7, 0x424),
         }
     }
 }
@@ -466,8 +480,14 @@ impl Default for LeftUserStickCalibration {
 }
 
 impl LeftUserStickCalibration {
+    pub fn set_magic(&mut self, magic: bool) {
+        match magic {
+            true => self.magic = USER_CALIB_MAGIC,
+            false => self.magic = USER_NO_CALIB_MAGIC,
+        }
+    }
+
     pub fn set_calib(&mut self, calib: LeftStickCalibration) {
-        self.magic = USER_CALIB_MAGIC;
         self.calib = calib;
     }
 
@@ -535,6 +555,7 @@ impl RightUserStickCalibration {
         self.magic = USER_CALIB_MAGIC;
         self.calib = calib;
     }
+
     pub fn calib(&self) -> Option<RightStickCalibration> {
         if self.magic == USER_CALIB_MAGIC {
             Some(self.calib)
@@ -543,29 +564,29 @@ impl RightUserStickCalibration {
         }
     }
 
-    pub fn max(&self) -> Option<(u16, u16)> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.max())
-        } else {
-            None
-        }
-    }
+    // pub fn max(&self) -> Option<(u16, u16)> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.max())
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn center(&self) -> Option<(u16, u16)> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.center())
-        } else {
-            None
-        }
-    }
+    // pub fn center(&self) -> Option<(u16, u16)> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.center())
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn min(&self) -> Option<(u16, u16)> {
-        if self.magic == USER_CALIB_MAGIC {
-            Some(self.calib.min())
-        } else {
-            None
-        }
-    }
+    // pub fn min(&self) -> Option<(u16, u16)> {
+    //     if self.magic == USER_CALIB_MAGIC {
+    //         Some(self.calib.min())
+    //     } else {
+    //         None
+    //     }
+    // }
 }
 
 impl fmt::Debug for RightUserStickCalibration {
@@ -834,5 +855,42 @@ impl TryFrom<SPIReadResult> for ControllerColor {
                 got: value.range(),
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+    use super::*;
+    use std::println;
+
+    #[test]
+    fn left_calibration() {
+        let calib = LeftStickCalibration::default();
+
+        println!("max: {:x},{:x}", calib.max().0, calib.max().1);
+        println!("center: {:x},{:x}", calib.center().0, calib.center().1);
+        println!("min: {:x},{:x}", calib.min().0, calib.min().1);
+
+        // check if calibration values are plausible
+        assert!(calib.min().0 >= calib.center().0);
+        assert!(calib.center().0 >= calib.max().0);
+        assert!(calib.min().1 >= calib.center().1);
+        assert!(calib.center().1 >= calib.max().1);
+    }
+
+    #[test]
+    fn right_calibration() {
+        let calib = RightStickCalibration::default();
+
+        println!("max: {:x},{:x}", calib.max().0, calib.max().1);
+        println!("center: {:x},{:x}", calib.center().0, calib.center().1);
+        println!("min: {:x},{:x}", calib.min().0, calib.min().1);
+
+        // check if calibration values are plausible
+        assert!(calib.min().0 >= calib.center().0);
+        assert!(calib.center().0 >= calib.max().0);
+        assert!(calib.min().1 >= calib.center().1);
+        assert!(calib.center().1 >= calib.max().1);
     }
 }
