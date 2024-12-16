@@ -20,13 +20,13 @@ impl SPIRange {
     }
 }
 
-pub const RANGE_FACTORY_CALIBRATION_SENSORS: SPIRange = SPIRange(0x6020, 0x18);
-pub const RANGE_FACTORY_CALIBRATION_STICKS: SPIRange = SPIRange(0x603D, 0x12);
-pub const RANGE_USER_CALIBRATION_STICKS: SPIRange = SPIRange(0x8010, 0x16);
-pub const RANGE_USER_CALIBRATION_SENSORS: SPIRange = SPIRange(0x8026, 0x1A);
+const RANGE_FACTORY_CALIBRATION_SENSORS: SPIRange = SPIRange(0x6020, 0x18);
+const RANGE_FACTORY_CALIBRATION_STICKS: SPIRange = SPIRange(0x603D, 0x12);
+const RANGE_USER_CALIBRATION_STICKS: SPIRange = SPIRange(0x8010, 0x16);
+const RANGE_USER_CALIBRATION_SENSORS: SPIRange = SPIRange(0x8026, 0x1A);
 
-pub const RANGE_CONTROLLER_COLOR_USE_SPI: SPIRange = SPIRange(0x601B, 1);
-pub const RANGE_CONTROLLER_COLOR: SPIRange = SPIRange(0x6050, 12);
+pub(crate) const RANGE_CONTROLLER_COLOR_USE_SPI: SPIRange = SPIRange(0x601B, 1);
+pub(crate) const RANGE_CONTROLLER_COLOR: SPIRange = SPIRange(0x6050, 12);
 
 pub trait SPI: TryFrom<SPIReadResult, Error = WrongRangeError> {
     fn range() -> SPIRange;
@@ -176,19 +176,12 @@ fn dbg_spi_data(out: &mut fmt::DebugStruct, address: U32LE, size: u8, data: &SPI
 #[repr(packed)]
 #[derive(Copy, Clone)]
 pub struct SPIReadResult {
-    address: U32LE,
-    size: u8,
-    data: SPIData,
+    pub(crate) address: U32LE,
+    pub(crate) size: u8,
+    pub(crate) data: SPIData,
 }
 
 impl SPIReadResult {
-    pub fn new(range: SPIRange, data: SPIData) -> Self {
-        Self {
-            address: range.0.into(),
-            size: range.1,
-            data,
-        }
-    }
     pub fn range(&self) -> SPIRange {
         SPIRange(self.address.into(), self.size)
     }
@@ -224,30 +217,26 @@ impl SPIWriteResult {
 
 #[repr(packed)]
 #[derive(Copy, Clone)]
-pub union SPIData {
-    pub sticks_factory_calib: SticksCalibration,
-    pub sticks_user_calib: UserSticksCalibration,
-    pub imu_factory_calib: SensorCalibration,
-    pub imu_user_calib: UserSensorCalibration,
-    pub color: ControllerColor,
-    pub use_spi_colors: RawId<UseSPIColors>,
-    pub raw: [u8; 0x1D],
+pub(crate) union SPIData {
+    pub(crate) sticks_factory_calib: SticksCalibration,
+    pub(crate) sticks_user_calib: UserSticksCalibration,
+    pub(crate) imu_factory_calib: SensorCalibration,
+    pub(crate) imu_user_calib: UserSensorCalibration,
+    pub(crate) color: ControllerColor,
+    pub(crate) use_spi_colors: RawId<UseSPIColors>,
+    pub(crate) raw: [u8; 0x1D],
 }
 
 fn cord_packing(x: u16, y: u16) -> [u8; 3] {
-    // Extract the lower and upper bits of x
-    let low_x = (x & 0xFF) as u8;
-    let high_x = ((x >> 8) & 0xFF) as u8;
+    let mut stick_cal = [0u8; 3];
 
-    // Extract the middle and lower bits of y
-    let mid_y = ((y >> 4) & 0xF0) as u8;
-    let low_y = (y & 0xF) as u8;
+    stick_cal[0] = (x & 0x00FF) as u8;
+    stick_cal[1] = ((x >> 8) & 0x000F) as u8 | ((y & 0x000F) << 4) as u8;
+    stick_cal[2] = (y >> 4) as u8;
 
-    // Combine these into a [u8; 3] array
-    [low_x, mid_y | low_y << 4, high_x]
+    stick_cal
 }
 
-// TODO: clean
 #[repr(packed)]
 #[derive(Copy, Clone, Default, Debug)]
 pub struct SticksCalibration {
@@ -258,6 +247,18 @@ pub struct SticksCalibration {
 impl SPI for SticksCalibration {
     fn range() -> SPIRange {
         RANGE_FACTORY_CALIBRATION_STICKS
+    }
+}
+
+impl Into<SPIReadResult> for SticksCalibration {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_FACTORY_CALIBRATION_STICKS.offset().into(),
+            size: RANGE_FACTORY_CALIBRATION_STICKS.size(),
+            data: SPIData {
+                sticks_factory_calib: self,
+            },
+        }
     }
 }
 
@@ -289,6 +290,18 @@ impl SPI for UserSticksCalibration {
     }
 }
 
+impl Into<SPIReadResult> for UserSticksCalibration {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_USER_CALIBRATION_STICKS.offset().into(),
+            size: RANGE_USER_CALIBRATION_STICKS.size(),
+            data: SPIData {
+                sticks_user_calib: self,
+            },
+        }
+    }
+}
+
 #[repr(packed)]
 #[derive(Copy, Clone)]
 pub struct LeftStickCalibration {
@@ -300,9 +313,9 @@ pub struct LeftStickCalibration {
 impl Default for LeftStickCalibration {
     fn default() -> Self {
         LeftStickCalibration {
-            max: cord_packing(0x4F7, 0x424),
+            max: cord_packing(0x510, 0x479),
             center: cord_packing(0x79F, 0x8A0),
-            min: cord_packing(0x510, 0x479),
+            min: cord_packing(0x4F7, 0x424),
         }
     }
 }
@@ -381,8 +394,8 @@ impl Default for RightStickCalibration {
     fn default() -> Self {
         RightStickCalibration {
             center: cord_packing(0x79F, 0x8A0),
-            min: cord_packing(0x510, 0x479),
-            max: cord_packing(0x4F7, 0x424),
+            min: cord_packing(0x4F7, 0x424),
+            max: cord_packing(0x510, 0x479),
         }
     }
 }
@@ -678,6 +691,18 @@ impl SPI for SensorCalibration {
     }
 }
 
+impl Into<SPIReadResult> for SensorCalibration {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_FACTORY_CALIBRATION_SENSORS.offset().into(),
+            size: RANGE_FACTORY_CALIBRATION_SENSORS.size(),
+            data: SPIData {
+                imu_factory_calib: self,
+            },
+        }
+    }
+}
+
 impl TryFrom<SPIReadResult> for SensorCalibration {
     type Error = WrongRangeError;
 
@@ -726,6 +751,7 @@ impl SPI for UserSensorCalibration {
         RANGE_USER_CALIBRATION_SENSORS
     }
 }
+
 impl From<SensorCalibration> for UserSensorCalibration {
     fn from(calib: SensorCalibration) -> Self {
         UserSensorCalibration {
@@ -743,6 +769,18 @@ impl From<UserSensorCalibration> for SPIWriteRequest {
             size: range.1,
             data: SPIData {
                 imu_user_calib: calib,
+            },
+        }
+    }
+}
+
+impl Into<SPIReadResult> for UserSensorCalibration {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_USER_CALIBRATION_SENSORS.offset().into(),
+            size: RANGE_USER_CALIBRATION_SENSORS.size(),
+            data: SPIData {
+                imu_user_calib: self,
             },
         }
     }
@@ -840,6 +878,16 @@ pub struct ControllerColor {
 impl SPI for ControllerColor {
     fn range() -> SPIRange {
         RANGE_CONTROLLER_COLOR
+    }
+}
+
+impl Into<SPIReadResult> for ControllerColor {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_CONTROLLER_COLOR.offset().into(),
+            size: RANGE_CONTROLLER_COLOR.size(),
+            data: SPIData { color: self },
+        }
     }
 }
 

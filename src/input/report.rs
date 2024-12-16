@@ -290,6 +290,18 @@ pub enum UseSPIColors {
     IncludingGrip = 2,
 }
 
+impl Into<SPIReadResult> for UseSPIColors {
+    fn into(self) -> SPIReadResult {
+        SPIReadResult {
+            address: RANGE_CONTROLLER_COLOR_USE_SPI.offset().into(),
+            size: RANGE_CONTROLLER_COLOR_USE_SPI.size(),
+            data: SPIData {
+                use_spi_colors: self.into(),
+            },
+        }
+    }
+}
+
 #[cfg(test)]
 #[test]
 fn check_layout() {
