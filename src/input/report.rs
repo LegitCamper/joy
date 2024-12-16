@@ -57,8 +57,14 @@ impl InputReport {
         }
     }
 
-    pub fn as_bytes(&self) -> &[u8] {
-        unsafe { core::slice::from_raw_parts(self as *const _ as *const u8, self.len()) }
+    pub fn as_bytes(&self) -> [u8; 64] {
+        let mut buf = [0; 64];
+        let data =
+            unsafe { core::slice::from_raw_parts(self as *const _ as *const u8, self.len()) };
+        for (idx, byte) in data.iter().enumerate() {
+            buf[idx] = *byte;
+        }
+        buf
     }
 
     pub fn as_bytes_mut(&mut self) -> &mut [u8] {
