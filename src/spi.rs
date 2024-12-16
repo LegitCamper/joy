@@ -916,29 +916,21 @@ mod tests {
     fn left_calibration() {
         let calib = LeftStickCalibration::default();
 
-        println!("max: {:x},{:x}", calib.max().0, calib.max().1);
-        println!("center: {:x},{:x}", calib.center().0, calib.center().1);
-        println!("min: {:x},{:x}", calib.min().0, calib.min().1);
-
         // check if calibration values are plausible
-        assert!(calib.min().0 >= calib.center().0);
-        assert!(calib.center().0 >= calib.max().0);
-        assert!(calib.min().1 >= calib.center().1);
-        assert!(calib.center().1 >= calib.max().1);
+        assert!(calib.min().0 < calib.center().0);
+        assert!(calib.center().0 < calib.max().0);
+        assert!(calib.min().1 < calib.center().1);
+        assert!(calib.center().1 < calib.max().1);
     }
 
     #[test]
     fn right_calibration() {
         let calib = RightStickCalibration::default();
 
-        println!("max: {:x},{:x}", calib.max().0, calib.max().1);
-        println!("center: {:x},{:x}", calib.center().0, calib.center().1);
-        println!("min: {:x},{:x}", calib.min().0, calib.min().1);
-
         // check if calibration values are plausible
-        assert!(calib.min().0 >= calib.center().0);
-        assert!(calib.center().0 >= calib.max().0);
-        assert!(calib.min().1 >= calib.center().1);
-        assert!(calib.center().1 >= calib.max().1);
+        assert!(calib.min().0 < calib.center().0);
+        assert!(calib.center().0 < calib.max().0);
+        assert!(calib.min().1 < calib.center().1);
+        assert!(calib.center().1 < calib.max().1);
     }
 }
